@@ -1,6 +1,6 @@
 {
   "name": "ChatGPT History Downloader",
-  "version": "0.1",
+  "version": "0.21",
   "manifest_version": 3,
   "background": {
     "service_worker": "background.js"
