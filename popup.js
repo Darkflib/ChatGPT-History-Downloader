@@ -50,6 +50,7 @@ function downloadMarkdown() {
         /This content may violate our content policy. If you believe this to be in error, please submit your feedback — your input will aid our research in this area./g,
         ""
       )
+      .replace(/-\n\*\*/g, "- **") // fix lists
       // fix entities
       .replace(/&nbsp;/g, " ")
       .replace(/&amp;/g, "&")
