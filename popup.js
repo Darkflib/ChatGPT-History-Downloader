@@ -1,4 +1,6 @@
 const buttonDownloadMarkdown = document.getElementById("download-markdown");
+const buttonDownloadHTML = document.getElementById("download-html");
+
 
 async function getCurrentTab() {
   const queryOptions = { active: true, currentWindow: true };
@@ -85,6 +87,44 @@ function downloadMarkdown() {
   })();
 }
 
+function downloadHTML() {
+  // get header and extract the model in use. This is a hacky way to do it
+  const header = document.querySelector("header").innerHTML;
+  const model = header.match(/<span>([^<]*)<\/span>/)[1];
+  console.log(model);
+  // each group is a message, so we can just download the whole thing... in theory
+  const e = document.querySelectorAll(".group.text-token-text-primary");
+  console.log(e);
+  output = "";
+  // loop through each message, and get the name and message, stripping out the div tags
+  for (const s of e) {
+    // if there is an image, use the alt text as the name
+    const img = s.querySelector("img");
+    const username = img ? img.alt : "ChatGPT";
+    // get the message, stripping out the div tags
+    const message = s.querySelector(".whitespace-pre-wrap").innerHTML;
+    // strip out the div tags from the message (this is a hacky way to do it) - need to support bare <div> tags and <div class="..."> tags
+    const html = message.replace(/<div[^\>]*>/g, "")
+      .replace(/<\/div>/g, "\n")
+      // copy code button has to be removed separately, as it is not a div
+      // note that this will remove any other buttons as well
+      .replace(/<button[^>]*>.*<\/button>/, "");
+    // add the message to the output
+    output += `<div><b>${username}</b>: ${html}</div>\n`;
+  }
+  // create a link to download the file
+  const o = document.createElement("a");
+  (o.download =
+    (document.querySelector("title")?.innerText ||
+      "Conversation with ChatGPT") + ".html"),
+    (o.href = URL.createObjectURL(new Blob([output]))),
+    (o.style.display = "none"),
+    document.body.appendChild(o),
+    o.click();
+
+
+}
+
 buttonDownloadMarkdown.addEventListener("click", async () => {
   const tab = await getCurrentTab();
 
@@ -94,8 +134,11 @@ buttonDownloadMarkdown.addEventListener("click", async () => {
   });
 });
 
-// Onload handler log stuff to console
-window.onload = function () {
-  console.log("Page Title: " + document.querySelector("title").innerText);
+buttonDownloadHTML.addEventListener("click", async () => {
+  const tab = await getCurrentTab();
 
-}
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    function: downloadHTML,
+  });
+});
